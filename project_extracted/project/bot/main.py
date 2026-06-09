@@ -19,12 +19,18 @@ from config.settings import (
 AUTO_RETRAIN_ENABLED = True
 RETRAIN_INTERVAL_DAYS = 7
 last_retrain_date = None
-from bot.exchange import get_balance, get_klines, get_exchange_name
+from bot.exchange import get_balance, get_klines, get_exchange_name, exchange as exc
 from bot.indicators import calculate_indicators, get_trend
 from bot.strategies import get_signal, check_trend_buy, check_trend_sell, calculate_dynamic_sltp, is_trading_session, check_portfolio_balance, check_multi_timeframe, check_correlation_filter, check_sentiment_filter
 from bot.risk_manager import RiskManager
 from bot.telegram_bot import send_telegram, check_telegram_commands, send_telegram_chart
 from ai.predictor import load_ai_model, ai_predict
+from bot.regime_detector import RegimeDetector
+from bot.whale_tracker import WhaleTracker
+from bot.grid_trading import GridBot
+from bot.dca_trading import DCABot
+from bot.signal_channel import SignalChannel
+from config.settings import GRID_TRADING_ENABLED, GRID_SYMBOLS, DCA_ENABLED, SIGNAL_CHANNEL_ENABLED, SIGNAL_CHANNEL_ID
 
 import pandas as pd
 
@@ -83,6 +89,23 @@ def run_bot():
     # Balans
     balance = get_balance()
     risk_manager = RiskManager(balance)
+
+    # Yangi modullarni ishga tushirish
+    regime_detector = RegimeDetector()
+    whale_tracker = WhaleTracker()
+    grid_bots = {}
+    dca_positions = {}
+    signal_channel = None
+
+    if SIGNAL_CHANNEL_ENABLED:
+        signal_channel = SignalChannel(SIGNAL_CHANNEL_ID)
+        print("  Signal kanal ulandi: " + SIGNAL_CHANNEL_ID)
+
+    if GRID_TRADING_ENABLED:
+        print("  Grid Trading: YOQILGAN (" + str(len(GRID_SYMBOLS)) + " coin)")
+
+    if DCA_ENABLED:
+        print("  DCA: YOQILGAN")
 
     print("")
     print("=" * 60)
@@ -145,8 +168,58 @@ def run_bot():
             ai_text = " | AI" if ai_loaded else ""
             session_ok, session_msg = is_trading_session()
             session_text = " | " + session_msg
+
+            # Regime Detection
+            sample_df = get_klines("BTC/USDT")
+            sample_df = calculate_indicators(sample_df)
+            sample_df = sample_df.dropna().reset_index(drop=True)
+            current_regime = "UNKNOWN"
+            if len(sample_df) > 50:
+                current_regime, regime_details = regime_detector.detect_regime(sample_df)
+
             print("")
-            print("[" + datetime.now().strftime("%H:%M:%S") + "] " + get_exchange_name() + ai_text + session_text + " | $" + str(round(current_balance, 2)) + " | Ochiq: " + str(len(open_positions)) + "/" + str(MAX_OPEN_POSITIONS) + " | " + status_text)
+            print("[" + datetime.now().strftime("%H:%M:%S") + "] " + get_exchange_name() + ai_text + " | " + current_regime + session_text + " | $" + str(round(current_balance, 2)) + " | Ochiq: " + str(len(open_positions)) + "/" + str(MAX_OPEN_POSITIONS) + " | " + status_text)
+
+            # Grid Trading tekshirish
+            if GRID_TRADING_ENABLED and regime_detector.should_use_grid(current_regime):
+                for grid_symbol in GRID_SYMBOLS:
+                    try:
+                        grid_df = get_klines(grid_symbol)
+                        grid_price = float(grid_df["close"].iloc[-1])
+
+                        if grid_symbol not in grid_bots:
+                            grid_bots[grid_symbol] = GridBot(grid_symbol, grid_price, current_balance)
+
+                        grid_bot = grid_bots[grid_symbol]
+
+                        if grid_bot.should_reset_grid(grid_price):
+                            grid_bot.reset_grid(grid_price)
+
+                        grid_signals = grid_bot.check_grid(grid_price)
+                        for gs in grid_signals:
+                            if gs["action"] == "GRID_TP":
+                                print("  [GRID_TP] " + grid_symbol + " +" + str(gs["profit_pct"]) + "% (+$" + str(gs["profit_usd"]) + ")")
+                            elif gs["action"] in ["GRID_BUY", "GRID_SELL"]:
+                                print("  [GRID] " + grid_symbol + " " + gs["action"] + " @ $" + str(round(gs["price"], 2)) + " Level:" + str(gs["level"]))
+                    except Exception as e:
+                        pass
+
+            # DCA tekshirish
+            if DCA_ENABLED:
+                for dca_sym in list(dca_positions.keys()):
+                    try:
+                        dca_df = get_klines(dca_sym)
+                        dca_price = float(dca_df["close"].iloc[-1])
+                        dca_bot = dca_positions[dca_sym]
+                        dca_signals = dca_bot.check_dca(dca_price)
+                        for ds in dca_signals:
+                            if ds["action"] == "DCA_BUY":
+                                print("  [DCA #" + str(ds["order_num"]) + "] " + dca_sym + " BUY @ $" + str(round(ds["price"], 2)) + " | Avg: $" + str(ds["avg_price"]))
+                            elif ds["action"] == "DCA_CLOSE":
+                                print("  [DCA CLOSE] " + dca_sym + " +" + str(ds["profit_pct"]) + "% (+$" + str(ds["profit_usd"]) + ") | " + str(ds["orders_count"]) + " orders")
+                                del dca_positions[dca_sym]
+                    except:
+                        pass
 
             # Har bir juftlikni tekshirish
             for symbol in symbols:
@@ -276,6 +349,20 @@ def run_bot():
                             if not corr_ok:
                                 print("  [SKIP] " + symbol + " " + signal_type + " - " + corr_msg)
                                 signal_type = None
+
+                        # Whale Tracker filtr
+                        if signal_type is not None:
+                            whale_ok, whale_msg = whale_tracker.check_whale_filter(signal_type)
+                            if not whale_ok:
+                                print("  [SKIP] " + symbol + " " + signal_type + " - " + whale_msg)
+                                signal_type = None
+
+                        # Regime Detection filtr
+                        if signal_type is not None:
+                            regime_ok, regime_msg = regime_detector.should_trade(current_regime, strategy_name)
+                            if not regime_ok:
+                                print("  [SKIP] " + symbol + " " + signal_type + " - " + regime_msg)
+                                signal_type = None
  
                         # Sentiment filtr (Fear & Greed)
                         if signal_type is not None:
@@ -290,6 +377,15 @@ def run_bot():
                             sl_pct, tp_pct = calculate_dynamic_sltp(row)
                             open_positions[symbol] = {"type": "LONG", "entry_price": current_price, "max_profit_price": current_price, "trailing_sl": 0, "trailing_active": False, "strategy": strategy_name, "ai_confidence": ai_confidence, "sl_pct": sl_pct, "tp_pct": tp_pct}
                             print("  [BUY] " + symbol + " LONG @ $" + str(round(current_price, 2)) + " | " + strategy_name + " | " + ai_text_msg + " | SL:" + str(sl_pct) + "% TP:" + str(tp_pct) + "%")
+
+                            # DCA yoqish
+                            if DCA_ENABLED and regime_detector.should_use_dca(current_regime):
+                                dca_size = current_balance * (RISK_PER_TRADE / 100)
+                                dca_positions[symbol] = DCABot(symbol, current_price, dca_size, strategy_name, ai_confidence)
+
+                            # Signal kanalga yuborish
+                            if signal_channel:
+                                signal_channel.send_signal(symbol, "LONG", strategy_name, ai_confidence, current_price, current_price * (1 - sl_pct / 100), current_price * (1 + tp_pct / 100), sl_pct, tp_pct)
 
                             msg3 = "<b>" + symbol + " LONG OCHILDI</b>" + NL + NL
                             msg3 = msg3 + "Birja: " + get_exchange_name() + NL
@@ -307,6 +403,10 @@ def run_bot():
                             sl_pct, tp_pct = calculate_dynamic_sltp(row)
                             open_positions[symbol] = {"type": "SHORT", "entry_price": current_price, "max_profit_price": current_price, "trailing_sl": 0, "trailing_active": False, "strategy": strategy_name, "ai_confidence": ai_confidence, "sl_pct": sl_pct, "tp_pct": tp_pct}
                             print("  [SELL] " + symbol + " SHORT @ $" + str(round(current_price, 2)) + " | " + strategy_name + " | " + ai_text_msg + " | SL:" + str(sl_pct) + "% TP:" + str(tp_pct) + "%")
+
+                            # Signal kanalga yuborish
+                            if signal_channel:
+                                signal_channel.send_signal(symbol, "SHORT", strategy_name, ai_confidence, current_price, current_price * (1 + sl_pct / 100), current_price * (1 - tp_pct / 100), sl_pct, tp_pct)
 
                             msg4 = "<b>" + symbol + " SHORT OCHILDI</b>" + NL + NL
                             msg4 = msg4 + "Birja: " + get_exchange_name() + NL
