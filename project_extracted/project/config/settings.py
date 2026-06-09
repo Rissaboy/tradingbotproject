@@ -136,3 +136,12 @@ DCA_MAX_ORDERS = 5               # Maksimum DCA orderlar soni
 DCA_STEP_PCT = 2.0               # Har 2% tushganda yangi order
 DCA_MULTIPLIER = 1.5             # Har keyingi order 1.5x katta
 DCA_TAKE_PROFIT_PCT = 1.5        # O'rtacha narxdan 1.5% foyda = yopish
+
+
+# Telegram Signal Kanal sozlamalari
+SIGNAL_CHANNEL_ENABLED = True    # Signal kanalga yuborish
+SIGNAL_CHANNEL_ID = "@sardor_trading_signals"  # Kanal username yoki ID
+# Kanal yaratish:
+# 1. Telegram da yangi kanal yarating
+# 2. Botni kanalga admin qiling
+# 3. Kanal username ni shu yerga yozing (@kanal_nomi)
