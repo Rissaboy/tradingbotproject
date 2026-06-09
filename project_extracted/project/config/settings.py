@@ -128,3 +128,11 @@ GRID_ORDER_SIZE_PCT = 2.0        # Har grid orderda balansning 2%
 GRID_TAKE_PROFIT_PCT = 0.8       # Har grid savdoda 0.8% foyda olish
 GRID_SYMBOLS = ["BTC/USDT", "ETH/USDT", "SOL/USDT"]  # Grid uchun juftliklar
 GRID_RESET_DISTANCE = 5.0       # Grid qayta yaratish masofasi (%)
+
+
+# DCA (Dollar Cost Averaging) sozlamalari
+DCA_ENABLED = True               # DCA yoqish/o'chirish
+DCA_MAX_ORDERS = 5               # Maksimum DCA orderlar soni
+DCA_STEP_PCT = 2.0               # Har 2% tushganda yangi order
+DCA_MULTIPLIER = 1.5             # Har keyingi order 1.5x katta
+DCA_TAKE_PROFIT_PCT = 1.5        # O'rtacha narxdan 1.5% foyda = yopish
