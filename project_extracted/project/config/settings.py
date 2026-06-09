@@ -118,3 +118,13 @@ DEFAULT_SYMBOLS = [
     "LINK/USDT",
     "POL/USDT"
 ]
+
+
+# Grid Trading sozlamalari
+GRID_TRADING_ENABLED = True      # Grid bot yoqish/o'chirish
+GRID_LEVELS = 5                  # Har tomonga 5 ta daraja (jami 10)
+GRID_SPACING_PCT = 0.5           # Darajalar orasidagi masofa (0.5%)
+GRID_ORDER_SIZE_PCT = 2.0        # Har grid orderda balansning 2%
+GRID_TAKE_PROFIT_PCT = 0.8       # Har grid savdoda 0.8% foyda olish
+GRID_SYMBOLS = ["BTC/USDT", "ETH/USDT", "SOL/USDT"]  # Grid uchun juftliklar
+GRID_RESET_DISTANCE = 5.0       # Grid qayta yaratish masofasi (%)
