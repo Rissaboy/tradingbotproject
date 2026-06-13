@@ -20,6 +20,7 @@ AUTO_RETRAIN_ENABLED = True
 RETRAIN_INTERVAL_DAYS = 7
 last_retrain_date = None
 from bot.exchange import get_balance, get_klines, get_exchange_name, exchange as exc
+from bot.exchange import place_market_buy, place_market_sell, get_asset_quantity, check_min_order, emergency_close_all
 from bot.indicators import calculate_indicators, get_trend
 from bot.strategies import get_signal, check_trend_buy, check_trend_sell, calculate_dynamic_sltp, is_trading_session, check_portfolio_balance, check_multi_timeframe, check_correlation_filter, check_sentiment_filter
 from bot.risk_manager import RiskManager
@@ -31,6 +32,7 @@ from bot.grid_trading import GridBot
 from bot.dca_trading import DCABot
 from bot.signal_channel import SignalChannel
 from config.settings import GRID_TRADING_ENABLED, GRID_SYMBOLS, DCA_ENABLED, SIGNAL_CHANNEL_ENABLED, SIGNAL_CHANNEL_ID
+from config.settings import LIVE_TRADING, ORDER_SIZE_USD, MIN_BALANCE_USD
 
 import pandas as pd
 
@@ -112,6 +114,8 @@ def run_bot():
     print("  SARDOR TRADING BOT v10 (Professional)")
     print("  Birja: " + get_exchange_name())
     print("  Testnet: " + str(USE_TESTNET))
+    print("  REJIM: " + ("HAQIQIY SAVDO (LIVE!)" if LIVE_TRADING else "SIMULYATSIYA (xavfsiz)"))
+    print("  Order hajmi: $" + str(ORDER_SIZE_USD))
     print("  Juftliklar: " + str(len(symbols)) + " ta")
     print("  Strategiya: Trend + Mean Reversion + AI")
     print("  AI: " + ("YOQILGAN (min " + str(int(AI_MIN_CONFIDENCE * 100)) + "%)" if ai_loaded else "O'CHIQ"))
@@ -287,6 +291,16 @@ def run_bot():
 
                         # Pozitsiyani yopish
                         if close_reason:
+                            # HAQIQIY SELL (agar LIVE_TRADING va LONG bo'lsa)
+                            if LIVE_TRADING and position_type == "LONG" and pos.get("real_qty", 0) > 0:
+                                real_qty = get_asset_quantity(symbol)
+                                if real_qty > 0:
+                                    sell_order, sell_msg = place_market_sell(symbol, real_qty)
+                                    if sell_order:
+                                        print("  [REAL SELL] " + sell_msg)
+                                    else:
+                                        print("  [XATO] " + sell_msg)
+
                             profit_loss = current_balance * (RISK_PER_TRADE / 100) * (profit_pct / STOP_LOSS_PCT)
                             risk_manager.record_trade(profit_loss)
                             emoji = "[+]" if profit_loss >= 0 else "[-]"
@@ -375,7 +389,21 @@ def run_bot():
                         if signal_type == "LONG":
                             # Dynamic SL/TP hisoblash
                             sl_pct, tp_pct = calculate_dynamic_sltp(row)
-                            open_positions[symbol] = {"type": "LONG", "entry_price": current_price, "max_profit_price": current_price, "trailing_sl": 0, "trailing_active": False, "strategy": strategy_name, "ai_confidence": ai_confidence, "sl_pct": sl_pct, "tp_pct": tp_pct}
+
+                            # HAQIQIY ORDER (agar LIVE_TRADING yoqilgan bo'lsa)
+                            real_qty = 0
+                            if LIVE_TRADING:
+                                if current_balance < MIN_BALANCE_USD:
+                                    print("  [SKIP] " + symbol + " - Balans kam ($" + str(round(current_balance, 2)) + " < $" + str(MIN_BALANCE_USD) + ")")
+                                    continue
+                                order, order_msg = place_market_buy(symbol, ORDER_SIZE_USD)
+                                if order is None:
+                                    print("  [XATO] " + symbol + " BUY - " + order_msg)
+                                    continue
+                                real_qty = order.get("amount", 0)
+                                print("  [REAL BUY] " + order_msg)
+
+                            open_positions[symbol] = {"type": "LONG", "entry_price": current_price, "max_profit_price": current_price, "trailing_sl": 0, "trailing_active": False, "strategy": strategy_name, "ai_confidence": ai_confidence, "sl_pct": sl_pct, "tp_pct": tp_pct, "real_qty": real_qty}
                             print("  [BUY] " + symbol + " LONG @ $" + str(round(current_price, 2)) + " | " + strategy_name + " | " + ai_text_msg + " | SL:" + str(sl_pct) + "% TP:" + str(tp_pct) + "%")
 
                             # DCA yoqish
@@ -401,7 +429,13 @@ def run_bot():
 
                         elif signal_type == "SHORT":
                             sl_pct, tp_pct = calculate_dynamic_sltp(row)
-                            open_positions[symbol] = {"type": "SHORT", "entry_price": current_price, "max_profit_price": current_price, "trailing_sl": 0, "trailing_active": False, "strategy": strategy_name, "ai_confidence": ai_confidence, "sl_pct": sl_pct, "tp_pct": tp_pct}
+
+                            # Spot savdoda SHORT bo'lmaydi - LIVE rejimda o'tkazib yuborish
+                            if LIVE_TRADING:
+                                print("  [SKIP] " + symbol + " SHORT - Spot savdoda SHORT yo'q (Futures kerak)")
+                                continue
+
+                            open_positions[symbol] = {"type": "SHORT", "entry_price": current_price, "max_profit_price": current_price, "trailing_sl": 0, "trailing_active": False, "strategy": strategy_name, "ai_confidence": ai_confidence, "sl_pct": sl_pct, "tp_pct": tp_pct, "real_qty": 0}
                             print("  [SELL] " + symbol + " SHORT @ $" + str(round(current_price, 2)) + " | " + strategy_name + " | " + ai_text_msg + " | SL:" + str(sl_pct) + "% TP:" + str(tp_pct) + "%")
 
                             # Signal kanalga yuborish

@@ -6,6 +6,13 @@
 EXCHANGE_NAME = "binance"        # binance, bybit, mexc, gateio, bingx
 USE_TESTNET = True               # True = test, False = real
 
+# REAL SAVDO sozlamalari (MUHIM!)
+LIVE_TRADING = False             # False = simulyatsiya, True = HAQIQIY order!
+# DIQQAT: LIVE_TRADING = True qilsangiz bot HAQIQIY pul bilan savdo qiladi!
+# Avval USE_TESTNET = True bilan sinab ko'ring
+ORDER_SIZE_USD = 10              # Har bir savdo uchun summa ($)
+MIN_BALANCE_USD = 20             # Bundan kam balansda savdo qilmaydi
+
 # Trading sozlamalari
 TIMEFRAME = "5m"                 # 1m, 5m, 15m, 1h, 4h
 STOP_LOSS_PCT = 3.0              # Stop-Loss %
