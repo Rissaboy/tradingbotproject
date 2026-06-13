@@ -45,6 +45,27 @@ def check_telegram_commands(bot_active, open_positions, get_balance_func):
                 bot_active = False
                 send_telegram("BOT TO'XTATILDI! Ochiq pozitsiyalar kuzatilmoqda.")
                 print("  >>> TELEGRAM: Bot TO'XTATILDI")
+            elif text == "/emergency":
+                # FAVQULODDA: barcha pozitsiyalarni yopish va to'xtatish
+                bot_active = False
+                send_telegram("FAVQULODDA TO'XTATISH! Barcha pozitsiyalar yopilmoqda...")
+                print("  >>> TELEGRAM: EMERGENCY STOP!")
+                try:
+                    from config.settings import LIVE_TRADING
+                    closed_list = []
+                    if LIVE_TRADING:
+                        from bot.exchange import emergency_close_all
+                        closed_list = emergency_close_all()
+                    count_before = len(open_positions)
+                    open_positions.clear()
+                    msg = "FAVQULODDA YOPILDI!" + NL
+                    msg = msg + "Yopilgan pozitsiyalar: " + str(count_before) + NL
+                    if LIVE_TRADING:
+                        msg = msg + "Real sotilgan: " + str(len(closed_list)) + " ta" + NL
+                    msg = msg + "Bot TO'XTATILDI. /start bilan qayta yoqing."
+                    send_telegram(msg)
+                except Exception as e:
+                    send_telegram("Emergency xato: " + str(e))
             elif text == "/status":
                 status = "YOQILGAN" if bot_active else "TO'XTATILGAN"
                 ai_status = "AI: YOQILGAN (" + str(int(AI_MIN_CONFIDENCE * 100)) + "%)" if AI_ENABLED else "AI: O'CHIQ"
@@ -67,6 +88,7 @@ def check_telegram_commands(bot_active, open_positions, get_balance_func):
                 msg = "Buyruqlar:" + NL + NL
                 msg = msg + "/start - Savdoni yoqish" + NL
                 msg = msg + "/stop - Savdoni to'xtatish" + NL
+                msg = msg + "/emergency - FAVQULODDA yopish (hammasini sotish)" + NL
                 msg = msg + "/status - Bot holati" + NL
                 msg = msg + "/balance - Balans" + NL
                 msg = msg + "/positions - Ochiq pozitsiyalar" + NL
