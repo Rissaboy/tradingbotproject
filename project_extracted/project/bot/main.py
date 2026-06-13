@@ -26,6 +26,7 @@ from bot.strategies import get_signal, check_trend_buy, check_trend_sell, calcul
 from bot.risk_manager import RiskManager
 from bot.telegram_bot import send_telegram, check_telegram_commands, send_telegram_chart
 from ai.predictor import load_ai_model, ai_predict
+from bot.logger import log_info, log_trade, log_error
 from bot.regime_detector import RegimeDetector
 from bot.whale_tracker import WhaleTracker
 from bot.grid_trading import GridBot
@@ -128,6 +129,8 @@ def run_bot():
     print("=" * 60)
     print("  Boshlangich balans: $" + str(round(balance, 2)))
     print("")
+
+    log_info("BOT ISHGA TUSHDI | Birja:" + get_exchange_name() + " | LIVE:" + str(LIVE_TRADING) + " | Balans:$" + str(round(balance, 2)) + " | Juftliklar:" + str(len(symbols)))
 
     msg = "<b>Sardor Trading Bot v10 (Pro)</b> ishga tushdi!" + NL + NL
     msg = msg + "Birja: " + get_exchange_name() + NL
@@ -305,6 +308,7 @@ def run_bot():
                             risk_manager.record_trade(profit_loss)
                             emoji = "[+]" if profit_loss >= 0 else "[-]"
                             print("  " + emoji + " " + symbol + " " + position_type + " YOPILDI (" + close_reason + ") " + str(round(profit_pct, 2)) + "% $" + str(round(profit_loss, 2)))
+                            log_trade("CLOSE " + position_type, symbol, close_reason + " | " + str(round(profit_pct, 2)) + "% | $" + str(round(profit_loss, 2)) + " | WinRate:" + str(round(risk_manager.get_win_rate(), 1)) + "%")
 
                             msg2 = "<b>" + symbol + " " + position_type + " YOPILDI</b>" + NL + NL
                             msg2 = msg2 + "Sabab: " + close_reason + NL
@@ -405,6 +409,7 @@ def run_bot():
 
                             open_positions[symbol] = {"type": "LONG", "entry_price": current_price, "max_profit_price": current_price, "trailing_sl": 0, "trailing_active": False, "strategy": strategy_name, "ai_confidence": ai_confidence, "sl_pct": sl_pct, "tp_pct": tp_pct, "real_qty": real_qty}
                             print("  [BUY] " + symbol + " LONG @ $" + str(round(current_price, 2)) + " | " + strategy_name + " | " + ai_text_msg + " | SL:" + str(sl_pct) + "% TP:" + str(tp_pct) + "%")
+                            log_trade("OPEN LONG", symbol, "@ $" + str(round(current_price, 2)) + " | " + strategy_name + " | AI:" + str(round(ai_confidence * 100, 1)) + "% | SL:" + str(sl_pct) + "% TP:" + str(tp_pct) + "%")
 
                             # DCA yoqish
                             if DCA_ENABLED and regime_detector.should_use_dca(current_regime):
@@ -437,6 +442,7 @@ def run_bot():
 
                             open_positions[symbol] = {"type": "SHORT", "entry_price": current_price, "max_profit_price": current_price, "trailing_sl": 0, "trailing_active": False, "strategy": strategy_name, "ai_confidence": ai_confidence, "sl_pct": sl_pct, "tp_pct": tp_pct, "real_qty": 0}
                             print("  [SELL] " + symbol + " SHORT @ $" + str(round(current_price, 2)) + " | " + strategy_name + " | " + ai_text_msg + " | SL:" + str(sl_pct) + "% TP:" + str(tp_pct) + "%")
+                            log_trade("OPEN SHORT", symbol, "@ $" + str(round(current_price, 2)) + " | " + strategy_name + " | AI:" + str(round(ai_confidence * 100, 1)) + "% | SL:" + str(sl_pct) + "% TP:" + str(tp_pct) + "%")
 
                             # Signal kanalga yuborish
                             if signal_channel:
@@ -478,6 +484,7 @@ def run_bot():
 
         except Exception as e:
             print("  XATO: " + str(e))
+            log_error(str(e))
             send_telegram("XATO: " + str(e))
             time.sleep(30)
 
