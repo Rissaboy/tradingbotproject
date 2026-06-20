@@ -42,8 +42,8 @@ def calculate_indicators(df):
     df["adx"] = adx.adx()
     
     # Breakout uchun 24h High/Low (5min * 288 = 24 soat)
-    df["high_24h"] = df["high"].rolling(window=288).max()
-    df["low_24h"] = df["low"].rolling(window=288).min()
+    df["high_24h"] = df["high"].rolling(window=288, min_periods=20).max()
+    df["low_24h"] = df["low"].rolling(window=288, min_periods=20).min()
 
     return df
 

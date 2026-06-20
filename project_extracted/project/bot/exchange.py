@@ -55,7 +55,7 @@ def get_balance(asset="USDT"):
 
 def get_klines(symbol):
     """Narx ma'lumotlarini olish (OHLCV) - HAQIQIY Binance dan"""
-    ohlcv = data_exchange.fetch_ohlcv(symbol, TIMEFRAME, limit=250)
+    ohlcv = data_exchange.fetch_ohlcv(symbol, TIMEFRAME, limit=350)
     df = pd.DataFrame(ohlcv, columns=["time", "open", "high", "low", "close", "volume"])
     df["time"] = pd.to_datetime(df["time"], unit="ms")
     df["close"] = df["close"].astype(float)
