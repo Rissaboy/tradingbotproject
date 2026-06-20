@@ -37,20 +37,25 @@ def create_exchange():
     return exchange
 
 
-# Global exchange obyekt
+# Global exchange obyekt (balans/order uchun - testnet yoki real)
 exchange = create_exchange()
+
+# Narx ma'lumoti uchun ALOHIDA ulanish (HAQIQIY Binance, ochiq ma'lumot)
+# Testnet data "o'lik" bo'lgani uchun, real signallar olish maqsadida
+# narxni doim haqiqiy Binance dan olamiz (API key kerak emas)
+data_exchange = ccxt.binance({"enableRateLimit": True, "timeout": 30000})
 
 
 def get_balance(asset="USDT"):
-    """USDT balansni olish"""
+    """USDT balansni olish (testnet yoki real hisobdan)"""
     balance = exchange.fetch_balance()
     usdt = balance.get(asset, {})
     return float(usdt.get("free", 0))
 
 
 def get_klines(symbol):
-    """Narx ma'lumotlarini olish (OHLCV)"""
-    ohlcv = exchange.fetch_ohlcv(symbol, TIMEFRAME, limit=250)
+    """Narx ma'lumotlarini olish (OHLCV) - HAQIQIY Binance dan"""
+    ohlcv = data_exchange.fetch_ohlcv(symbol, TIMEFRAME, limit=250)
     df = pd.DataFrame(ohlcv, columns=["time", "open", "high", "low", "close", "volume"])
     df["time"] = pd.to_datetime(df["time"], unit="ms")
     df["close"] = df["close"].astype(float)

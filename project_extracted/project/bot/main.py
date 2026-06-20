@@ -19,7 +19,7 @@ from config.settings import (
 AUTO_RETRAIN_ENABLED = True
 RETRAIN_INTERVAL_DAYS = 7
 last_retrain_date = None
-from bot.exchange import get_balance, get_klines, get_exchange_name, exchange as exc
+from bot.exchange import get_balance, get_klines, get_exchange_name, exchange as exc, data_exchange
 from bot.exchange import place_market_buy, place_market_sell, get_asset_quantity, check_min_order, emergency_close_all
 from bot.indicators import calculate_indicators, get_trend
 from bot.strategies import get_signal, check_trend_buy, check_trend_sell, calculate_dynamic_sltp, is_trading_session, check_portfolio_balance, check_multi_timeframe, check_correlation_filter, check_sentiment_filter
@@ -362,8 +362,8 @@ def run_bot():
  
                         # Correlation filtr (BTC)
                         if signal_type is not None:
-                            from bot.exchange import exchange as exc
-                            corr_ok, corr_msg = check_correlation_filter(symbol, signal_type, exc)
+                            from bot.exchange import data_exchange
+                            corr_ok, corr_msg = check_correlation_filter(symbol, signal_type, data_exchange)
                             if not corr_ok:
                                 print("  [SKIP] " + symbol + " " + signal_type + " - " + corr_msg)
                                 signal_type = None
