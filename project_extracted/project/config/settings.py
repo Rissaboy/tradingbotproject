@@ -54,7 +54,7 @@ RSI_OVERBOUGHT = 75              # RSI yuqori zona
 
 # AI sozlamalari
 AI_ENABLED = True                # AI yoqish/o'chirish
-AI_MIN_CONFIDENCE = 0.70         # Minimum AI ishonch (0.0 - 1.0)
+AI_MIN_CONFIDENCE = 0.55         # Minimum AI ishonch (0.0 - 1.0)
 AI_MODEL_FILE = "ai/models/sardor_ai_model.pkl"
 AI_FEATURES_FILE = "ai/models/sardor_ai_features.pkl"
 
