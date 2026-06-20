@@ -76,6 +76,45 @@ def load_symbols():
 open_positions = {}
 
 
+def build_daily_report():
+    """Kunlik hisobot tayyorlash (Excel dan)"""
+    try:
+        filepath = os.path.join(ROOT_DIR, EXCEL_FILE)
+        if not os.path.exists(filepath):
+            return "Hali savdo yo'q"
+
+        df = pd.read_excel(filepath)
+        closed = df[df["Foyda_usd"] != 0]
+
+        if len(closed) == 0:
+            return "Hali yopilgan savdo yo'q"
+
+        total = len(closed)
+        wins = len(closed[closed["Foyda_usd"] > 0])
+        losses = len(closed[closed["Foyda_usd"] < 0])
+        win_rate = round(wins / total * 100, 1) if total > 0 else 0
+        net_profit = round(closed["Foyda_usd"].sum(), 2)
+
+        # Bugungi savdolar (oxirgi sana bo'yicha)
+        today_str = datetime.now().strftime("%Y-%m-%d")
+        today = closed[closed["Sana"].astype(str).str.startswith(today_str)]
+        today_count = len(today)
+        today_profit = round(today["Foyda_usd"].sum(), 2) if today_count > 0 else 0
+
+        msg = "KUNLIK HISOBOT" + NL + NL
+        msg = msg + "Sana: " + today_str + NL
+        msg = msg + "-----------------------" + NL
+        msg = msg + "Jami yopilgan: " + str(total) + NL
+        msg = msg + "Foydali: " + str(wins) + " | Zarali: " + str(losses) + NL
+        msg = msg + "Win rate: " + str(win_rate) + "%" + NL
+        msg = msg + "Sof foyda: $" + str(net_profit) + NL
+        msg = msg + "-----------------------" + NL
+        msg = msg + "Bugun: " + str(today_count) + " savdo | $" + str(today_profit)
+        return msg
+    except Exception as e:
+        return "Hisobot xato: " + str(e)
+
+
 def run_bot():
     global open_positions
 
@@ -169,6 +208,9 @@ def run_bot():
             # Yangi kun
             if risk_manager.new_day_check(current_balance):
                 send_telegram("Yangi kun boshlandi! Balans: $" + str(round(current_balance, 2)))
+                # Kunlik hisobot yuborish
+                daily_report = build_daily_report()
+                send_telegram(daily_report)
 
             # Status
             status_text = "YOQILGAN" if bot_active else "TO'XTATILGAN"
