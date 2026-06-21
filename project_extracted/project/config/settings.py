@@ -67,7 +67,7 @@ SCAN_TIMEFRAME = "1h"            # Scanner timeframe
 
  
 # Session filter (savdo soatlari)
-SESSION_FILTER_ENABLED = True    # True = faqat aktiv soatlarda savdo
+SESSION_FILTER_ENABLED = False   # False = 24/7 savdo (kripto doim ishlaydi)
 # Kripto 24/7 ishlaydi, lekin eng aktiv vaqtlar:
 # Asia session: 00:00 - 08:00 UTC (Toshkent: 05:00 - 13:00)
 # Europe session: 07:00 - 16:00 UTC (Toshkent: 12:00 - 21:00)
