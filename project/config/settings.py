@@ -133,6 +133,7 @@ GRID_TAKE_PROFIT_PCT = 5.0       # Grid TP %
 GRID_STOP_LOSS_PCT = 10.0        # Grid SL %
 GRID_MIN_PROFIT_PCT = 0.5        # Grid minimal foyda %
 GRID_MAX_ORDERS = 10             # Maksimal grid orderlar soni
+GRID_SYMBOLS = []                # Grid uchun coinlar ro'yxati (bo'sh = barcha)
 
 # =====================================================
 # DCA TRADING SOZLAMALARI (Dollar Cost Averaging)
@@ -144,6 +145,12 @@ DCA_SIZE_MULTIPLIER = 1.5        # Har bir DCA order hajmi multiplier
 DCA_MULTIPLIER = 1.5             # DCA_SIZE_MULTIPLIER bilan bir xil (eski bot uchun)
 DCA_TAKE_PROFIT_PCT = 3.0        # DCA umumiy TP %
 DCA_MAX_DEVIATION_PCT = 10.0     # Maksimal narx og'ishi % (10% dan ortiq tushsa to'xtatish)
+
+# =====================================================
+# SIGNAL CHANNEL SOZLAMALARI (Telegram signal kanallar)
+# =====================================================
+SIGNAL_CHANNEL_ENABLED = False   # Signal channel o'chirilgan
+SIGNAL_CHANNEL_ID = ""           # Telegram kanal ID (bo'sh = o'chiq)
 
 # =====================================================
 # QO'SHIMCHA SOZLAMALAR
