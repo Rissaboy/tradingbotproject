@@ -128,6 +128,7 @@ GRID_TRADING_ENABLED = False     # Grid trading o'chirilgan
 GRID_LEVELS = 10                 # Grid darajalari soni
 GRID_SPACING_PCT = 0.5           # Gridlar orasidagi masofa %
 GRID_POSITION_SIZE_PCT = 10.0    # Har bir grid uchun hajm %
+GRID_ORDER_SIZE_PCT = 10.0       # Eski bot uchun (GRID_POSITION_SIZE_PCT bilan bir xil)
 
 # =====================================================
 # QO'SHIMCHA SOZLAMALAR
