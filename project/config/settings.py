@@ -167,3 +167,12 @@ SMART_MONEY_THRESHOLD = 1000000  # Min smart money hajm ($)
 MARKET_REGIME_ENABLED = True     # Bozor holatini aniqlash (trending/ranging)
 RANGING_ATR_THRESHOLD = 1.5      # ATR < 1.5% = ranging market
 TRENDING_ATR_THRESHOLD = 3.5     # ATR > 3.5% = high volatility
+
+
+
+# =====================================================
+# LIVE TRADING SOZLAMALARI
+# =====================================================
+LIVE_TRADING = not USE_TESTNET  # True = real, False = testnet
+ORDER_SIZE_USD = 100.0          # Order hajmi USD
+MIN_BALANCE_USD = 50.0          # Minimal balans USD
