@@ -141,6 +141,7 @@ DCA_ENABLED = False              # DCA trading o'chirilgan
 DCA_MAX_ORDERS = 5               # Maksimal DCA orderlar soni
 DCA_STEP_PCT = 2.0               # Har bir DCA qadami % (narx 2% tushganda)
 DCA_SIZE_MULTIPLIER = 1.5        # Har bir DCA order hajmi multiplier
+DCA_MULTIPLIER = 1.5             # DCA_SIZE_MULTIPLIER bilan bir xil (eski bot uchun)
 DCA_TAKE_PROFIT_PCT = 3.0        # DCA umumiy TP %
 DCA_MAX_DEVIATION_PCT = 10.0     # Maksimal narx og'ishi % (10% dan ortiq tushsa to'xtatish)
 
