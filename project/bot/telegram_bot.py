@@ -63,6 +63,16 @@ def check_telegram_commands(bot_active, open_positions, get_balance_func):
                     for sym, pos in open_positions.items():
                         msg = msg + sym + " " + pos["type"] + " @ $" + str(round(pos["entry_price"], 2)) + " (" + pos["strategy"] + ") AI:" + str(round(pos["ai_confidence"] * 100)) + "%" + NL
                     send_telegram(msg)
+            elif text == "/retrain":
+                send_telegram("⏳ AI model qayta o'rgatilmoqda... (5-10 daqiqa)")
+                try:
+                    from ai.auto_retrain import retrain
+                    new_accuracy = retrain()
+                    send_telegram("✅ AI model muvaffaqiyatli o'rgatildi!" + NL + NL + "Yangi accuracy: " + str(round(new_accuracy * 100, 1)) + "%" + NL + NL + "Bot yangi model bilan ishlayapti.")
+                    print("  >>> TELEGRAM: AI qayta o'rgatildi - Accuracy: " + str(round(new_accuracy * 100, 1)) + "%")
+                except Exception as e:
+                    send_telegram("❌ AI o'rgatishda xato: " + str(e))
+                    print("  >>> TELEGRAM: AI retrain xato - " + str(e))
             elif text == "/help":
                 msg = "Buyruqlar:" + NL + NL
                 msg = msg + "/start - Savdoni yoqish" + NL
@@ -70,6 +80,7 @@ def check_telegram_commands(bot_active, open_positions, get_balance_func):
                 msg = msg + "/status - Bot holati" + NL
                 msg = msg + "/balance - Balans" + NL
                 msg = msg + "/positions - Ochiq pozitsiyalar" + NL
+                msg = msg + "/retrain - AI modelni qayta o'rgatish (5-10 min)" + NL
                 msg = msg + "/help - Yordam"
                 send_telegram(msg)
     except Exception as e:
