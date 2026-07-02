@@ -1,0 +1,9 @@
+ccxt
+pandas
+numpy
+ta
+xgboost
+scikit-learn
+joblib
+openpyxl
+requests
