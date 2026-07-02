@@ -47,7 +47,7 @@ RSI_OVERBOUGHT = 75              # RSI yuqori zona
 
 # AI sozlamalari
 AI_ENABLED = True                # AI yoqish/o'chirish
-AI_MIN_CONFIDENCE = 0.75         # Minimum AI ishonch (INCREASED from 0.70 - more selective)
+AI_MIN_CONFIDENCE = 0.80         # Minimum AI ishonch (INCREASED to 0.80 for better quality)
 AI_MODEL_FILE = "ai/models/sardor_ai_model.pkl"
 AI_FEATURES_FILE = "ai/models/sardor_ai_features.pkl"
 
@@ -118,3 +118,29 @@ DEFAULT_SYMBOLS = [
     "LINK/USDT",
     "POL/USDT"
 ]
+
+
+
+# =====================================================
+# GRID TRADING SOZLAMALARI (Eski bot uchun)
+# =====================================================
+GRID_TRADING_ENABLED = False     # Grid trading o'chirilgan
+GRID_LEVELS = 10                 # Grid darajalari soni
+GRID_SPACING_PCT = 0.5           # Gridlar orasidagi masofa %
+GRID_POSITION_SIZE_PCT = 10.0    # Har bir grid uchun hajm %
+
+# =====================================================
+# QO'SHIMCHA SOZLAMALAR
+# =====================================================
+# Whale tracking (katta orderlar kuzatuvi)
+WHALE_TRACKING_ENABLED = True    # Whale signallarini kuzatish
+WHALE_MIN_SIZE_BTC = 50          # Minimum whale order hajmi (BTC)
+
+# Smart Money sozlamalari
+SMART_MONEY_ENABLED = True       # Smart Money flow kuzatuvi
+SMART_MONEY_THRESHOLD = 1000000  # Min smart money hajm ($)
+
+# Market regime detection
+MARKET_REGIME_ENABLED = True     # Bozor holatini aniqlash (trending/ranging)
+RANGING_ATR_THRESHOLD = 1.5      # ATR < 1.5% = ranging market
+TRENDING_ATR_THRESHOLD = 3.5     # ATR > 3.5% = high volatility
