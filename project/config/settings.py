@@ -129,6 +129,10 @@ GRID_LEVELS = 10                 # Grid darajalari soni
 GRID_SPACING_PCT = 0.5           # Gridlar orasidagi masofa %
 GRID_POSITION_SIZE_PCT = 10.0    # Har bir grid uchun hajm %
 GRID_ORDER_SIZE_PCT = 10.0       # Eski bot uchun (GRID_POSITION_SIZE_PCT bilan bir xil)
+GRID_TAKE_PROFIT_PCT = 5.0       # Grid TP %
+GRID_STOP_LOSS_PCT = 10.0        # Grid SL %
+GRID_MIN_PROFIT_PCT = 0.5        # Grid minimal foyda %
+GRID_MAX_ORDERS = 10             # Maksimal grid orderlar soni
 
 # =====================================================
 # QO'SHIMCHA SOZLAMALAR
