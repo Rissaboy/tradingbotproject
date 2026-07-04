@@ -12,7 +12,10 @@ from config.settings import (
     EXCHANGE_NAME, USE_TESTNET, TIMEFRAME, STOP_LOSS_PCT, TAKE_PROFIT_PCT,
     RISK_PER_TRADE, MAX_OPEN_POSITIONS, TRAILING_ACTIVATE_PCT,
     TRAILING_DISTANCE_PCT, AI_ENABLED, AI_MIN_CONFIDENCE,
-    SCANNER_FILE, DEFAULT_SYMBOLS, EXCEL_FILE
+    SCANNER_FILE, DEFAULT_SYMBOLS, EXCEL_FILE,
+    # Advanced Features
+    VOLUME_ANALYSIS_ENABLED, ORDERBOOK_ANALYSIS_ENABLED,
+    ARBITRAGE_ENABLED, SENTIMENT_ANALYSIS_ENABLED, ML_ENSEMBLE_ENABLED
 )
 
 # Auto retraining
@@ -24,8 +27,14 @@ from bot.indicators import calculate_indicators, get_trend
 from bot.strategies import get_signal, check_trend_buy, check_trend_sell, calculate_dynamic_sltp, is_trading_session, check_portfolio_balance, check_multi_timeframe, check_correlation_filter, check_sentiment_filter
 from bot.risk_manager import RiskManager
 from bot.telegram_bot import send_telegram, check_telegram_commands, send_telegram_chart
-from bot.pair_trading import PairTradingEngine
 from ai.predictor import load_ai_model, ai_predict
+
+# Advanced Features
+from bot.volume_analysis import VolumeAnalyzer
+from bot.orderbook_analysis import OrderBookAnalyzer
+from bot.sentiment_analysis import SentimentAnalyzer
+if ML_ENSEMBLE_ENABLED:
+    from bot.ml_ensemble import MLEnsemble
 
 import pandas as pd
 
@@ -67,9 +76,15 @@ def load_symbols():
 # ===================== ASOSIY BOT =====================
 open_positions = {}
 
+# Advanced Features initialization
+volume_analyzer = None
+orderbook_analyzer = None
+sentiment_analyzer = None
+ml_ensemble = None
+
 
 def run_bot():
-    global open_positions
+    global open_positions, volume_analyzer, orderbook_analyzer, sentiment_analyzer, ml_ensemble
 
     bot_active = True
 
@@ -80,10 +95,24 @@ def run_bot():
     ai_loaded = False
     if AI_ENABLED:
         ai_loaded = load_ai_model()
-
-    # Pair Trading engine
-    from bot.exchange import exchange as exc
-    pair_engine = PairTradingEngine(exc)
+    
+    # Advanced Features yuklash
+    if VOLUME_ANALYSIS_ENABLED:
+        volume_analyzer = VolumeAnalyzer()
+        print("  ✅ Volume Analysis yuklandi")
+    
+    if ORDERBOOK_ANALYSIS_ENABLED:
+        from bot.exchange import exchange as exc
+        orderbook_analyzer = OrderBookAnalyzer(exc)
+        print("  ✅ Order Book Analysis yuklandi")
+    
+    if SENTIMENT_ANALYSIS_ENABLED:
+        sentiment_analyzer = SentimentAnalyzer()
+        print("  ✅ Sentiment Analysis yuklandi")
+    
+    if ML_ENSEMBLE_ENABLED:
+        ml_ensemble = MLEnsemble()
+        print("  ✅ ML Ensemble yuklandi")
 
     # Balans
     balance = get_balance()
@@ -119,11 +148,6 @@ def run_bot():
         try:
             # Telegram buyruqlar
             bot_active = check_telegram_commands(bot_active, open_positions, get_balance)
-
-            # Pair Trading korrelyatsiyani yangilash (har soat)
-            from config.settings import PAIR_TRADING_ENABLED
-            if PAIR_TRADING_ENABLED:
-                pair_engine.update_correlations(symbols)
 
             # Auto AI Retraining (har 7 kunda)
             global last_retrain_date
@@ -260,22 +284,8 @@ def run_bot():
                         if not session_ok:
                             continue
 
-                        # Signal olish (asosiy strategiya)
+                        # Signal olish
                         signal_type, signal_dir, strategy_name = get_signal(row, prev, trend)
-
-                        # PAIR TRADING SIGNALLARI (yangi!)
-                        if PAIR_TRADING_ENABLED and signal_type is None:
-                            current_prices = {s: get_klines(s).iloc[-1]["close"] for s in symbols}
-                            pair_signals = pair_engine.check_pair_signals(current_prices, open_positions)
-                            
-                            if pair_signals:
-                                for ps in pair_signals[:1]:  # Faqat birinchi signal
-                                    if ps["symbol"] == symbol:
-                                        signal_type = ps["type"]
-                                        strategy_name = ps["strategy"]
-                                        signal_dir = 1 if signal_type == "LONG" else -1
-                                        print(f"  [PAIR] {symbol} {signal_type} - {ps['reason']}")
-                                        break
 
                         # Portfolio balance filter
                         if signal_type is not None:
@@ -283,6 +293,61 @@ def run_bot():
                             if not pf_ok:
                                 print("  [SKIP] " + symbol + " " + signal_type + " - " + pf_msg)
                                 signal_type = None
+                        
+                        # ===== ADVANCED FEATURES =====
+                        signal_strength = 1.0  # Asosiy signal kuchi
+                        feature_confirmations = []
+                        
+                        # Feature 1: Volume Analysis
+                        if signal_type is not None and VOLUME_ANALYSIS_ENABLED and volume_analyzer:
+                            vol_result = volume_analyzer.analyze_volume(df, symbol)
+                            if vol_result.get("signal"):
+                                if vol_result["signal"] == signal_type:
+                                    signal_strength += vol_result["strength"]
+                                    feature_confirmations.append("Volume(" + vol_result["reason"] + ")")
+                                elif vol_result["signal"] != signal_type:
+                                    # Teskari signal = zaiflashtirish
+                                    signal_strength -= 0.5
+                                    print("  [WARN] " + symbol + " - Volume teskari: " + vol_result["reason"])
+                        
+                        # Feature 2: Order Book Analysis
+                        if signal_type is not None and ORDERBOOK_ANALYSIS_ENABLED and orderbook_analyzer:
+                            ob_result = orderbook_analyzer.analyze_orderbook(symbol)
+                            if ob_result.get("signal"):
+                                if ob_result["signal"] == signal_type:
+                                    signal_strength += ob_result["strength"]
+                                    feature_confirmations.append("OrderBook(" + ob_result["reason"] + ")")
+                                elif ob_result["signal"] != signal_type:
+                                    signal_strength -= 0.5
+                                    print("  [WARN] " + symbol + " - OrderBook teskari: " + ob_result["reason"])
+                        
+                        # Feature 4: Sentiment Analysis (Global market sentiment)
+                        if signal_type is not None and SENTIMENT_ANALYSIS_ENABLED and sentiment_analyzer:
+                            sent_result = sentiment_analyzer.analyze_sentiment()
+                            if sent_result.get("signal"):
+                                if sent_result["signal"] == signal_type:
+                                    signal_strength += sent_result["strength"]
+                                    feature_confirmations.append("Sentiment(" + sent_result["reason"] + ")")
+                                elif sent_result["signal"] != signal_type:
+                                    # Sentiment teskari = warning faqat
+                                    print("  [WARN] " + symbol + " - Sentiment teskari: " + sent_result["reason"])
+                        
+                        # Feature 5: ML Ensemble
+                        if signal_type is not None and ML_ENSEMBLE_ENABLED and ml_ensemble:
+                            ens_result = ml_ensemble.predict_ensemble(df)
+                            if ens_result.get("signal"):
+                                if ens_result["signal"] == signal_type:
+                                    signal_strength += ens_result["confidence"] * 3
+                                    feature_confirmations.append("Ensemble(" + str(round(ens_result["confidence"]*100)) + "%)")
+                                elif ens_result["signal"] != signal_type:
+                                    # Ensemble teskari = bekor qilish
+                                    print("  [SKIP] " + symbol + " " + signal_type + " - Ensemble teskari")
+                                    signal_type = None
+                        
+                        # Signal strength check (minimum 1.5 kerak)
+                        if signal_type is not None and signal_strength < 1.5:
+                            print("  [SKIP] " + symbol + " " + signal_type + " - Signal zaif (" + str(round(signal_strength, 2)) + " < 1.5)")
+                            signal_type = None
 
                         # AI filtr
                         ai_confidence = 1.0
@@ -312,13 +377,18 @@ def run_bot():
                         if signal_type == "LONG":
                             # Dynamic SL/TP hisoblash
                             sl_pct, tp_pct = calculate_dynamic_sltp(row)
-                            open_positions[symbol] = {"type": "LONG", "entry_price": current_price, "max_profit_price": current_price, "trailing_sl": 0, "trailing_active": False, "strategy": strategy_name, "ai_confidence": ai_confidence, "sl_pct": sl_pct, "tp_pct": tp_pct}
-                            print("  [BUY] " + symbol + " LONG @ $" + str(round(current_price, 2)) + " | " + strategy_name + " | " + ai_text_msg + " | SL:" + str(sl_pct) + "% TP:" + str(tp_pct) + "%")
+                            open_positions[symbol] = {"type": "LONG", "entry_price": current_price, "max_profit_price": current_price, "trailing_sl": 0, "trailing_active": False, "strategy": strategy_name, "ai_confidence": ai_confidence, "sl_pct": sl_pct, "tp_pct": tp_pct, "signal_strength": signal_strength}
+                            
+                            features_text = " | " + ", ".join(feature_confirmations) if feature_confirmations else ""
+                            print("  [BUY] " + symbol + " LONG @ $" + str(round(current_price, 2)) + " | " + strategy_name + " | " + ai_text_msg + " | SL:" + str(sl_pct) + "% TP:" + str(tp_pct) + "%" + features_text)
 
                             msg3 = "<b>" + symbol + " LONG OCHILDI</b>" + NL + NL
                             msg3 = msg3 + "Birja: " + get_exchange_name() + NL
                             msg3 = msg3 + "Strategiya: " + strategy_name + NL
+                            msg3 = msg3 + "Signal kuchi: " + str(round(signal_strength, 2)) + NL
                             msg3 = msg3 + "AI: " + str(round(ai_confidence * 100)) + "%" + NL
+                            if feature_confirmations:
+                                msg3 = msg3 + "Tasdiqlar: " + ", ".join(feature_confirmations) + NL
                             msg3 = msg3 + "Narx: $" + str(round(current_price, 2)) + NL
                             msg3 = msg3 + "SL: $" + str(round(current_price * (1 - sl_pct / 100), 2)) + " (" + str(sl_pct) + "%)" + NL
                             msg3 = msg3 + "TP: $" + str(round(current_price * (1 + tp_pct / 100), 2)) + " (" + str(tp_pct) + "%)"
@@ -329,13 +399,18 @@ def run_bot():
 
                         elif signal_type == "SHORT":
                             sl_pct, tp_pct = calculate_dynamic_sltp(row)
-                            open_positions[symbol] = {"type": "SHORT", "entry_price": current_price, "max_profit_price": current_price, "trailing_sl": 0, "trailing_active": False, "strategy": strategy_name, "ai_confidence": ai_confidence, "sl_pct": sl_pct, "tp_pct": tp_pct}
-                            print("  [SELL] " + symbol + " SHORT @ $" + str(round(current_price, 2)) + " | " + strategy_name + " | " + ai_text_msg + " | SL:" + str(sl_pct) + "% TP:" + str(tp_pct) + "%")
+                            open_positions[symbol] = {"type": "SHORT", "entry_price": current_price, "max_profit_price": current_price, "trailing_sl": 0, "trailing_active": False, "strategy": strategy_name, "ai_confidence": ai_confidence, "sl_pct": sl_pct, "tp_pct": tp_pct, "signal_strength": signal_strength}
+                            
+                            features_text = " | " + ", ".join(feature_confirmations) if feature_confirmations else ""
+                            print("  [SELL] " + symbol + " SHORT @ $" + str(round(current_price, 2)) + " | " + strategy_name + " | " + ai_text_msg + " | SL:" + str(sl_pct) + "% TP:" + str(tp_pct) + "%" + features_text)
 
                             msg4 = "<b>" + symbol + " SHORT OCHILDI</b>" + NL + NL
                             msg4 = msg4 + "Birja: " + get_exchange_name() + NL
                             msg4 = msg4 + "Strategiya: " + strategy_name + NL
+                            msg4 = msg4 + "Signal kuchi: " + str(round(signal_strength, 2)) + NL
                             msg4 = msg4 + "AI: " + str(round(ai_confidence * 100)) + "%" + NL
+                            if feature_confirmations:
+                                msg4 = msg4 + "Tasdiqlar: " + ", ".join(feature_confirmations) + NL
                             msg4 = msg4 + "Narx: $" + str(round(current_price, 2)) + NL
                             msg4 = msg4 + "SL: $" + str(round(current_price * (1 + sl_pct / 100), 2)) + " (" + str(sl_pct) + "%)" + NL
                             msg4 = msg4 + "TP: $" + str(round(current_price * (1 - tp_pct / 100), 2)) + " (" + str(tp_pct) + "%)"

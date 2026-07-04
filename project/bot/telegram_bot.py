@@ -63,32 +63,102 @@ def check_telegram_commands(bot_active, open_positions, get_balance_func):
                     for sym, pos in open_positions.items():
                         msg = msg + sym + " " + pos["type"] + " @ $" + str(round(pos["entry_price"], 2)) + " (" + pos["strategy"] + ") AI:" + str(round(pos["ai_confidence"] * 100)) + "%" + NL
                     send_telegram(msg)
-            elif text == "/correlation":
+            
+            # Advanced Features Commands
+            elif text == "/sentiment":
                 try:
-                    # pair_trading moduldan import
-                    report = "Pair Trading module yuklanmagan"
+                    from bot.sentiment_analysis import SentimentAnalyzer
+                    analyzer = SentimentAnalyzer()
+                    report = analyzer.get_sentiment_report()
                     send_telegram(report)
                 except Exception as e:
-                    send_telegram("Korrelyatsiya ma'lumotlari yo'q")
-            elif text == "/retrain":
-                send_telegram("⏳ AI model qayta o'rgatilmoqda... (5-10 daqiqa)")
+                    send_telegram("Sentiment xato: " + str(e))
+            
+            elif text.startswith("/volume"):
                 try:
-                    from ai.auto_retrain import retrain
-                    new_accuracy = retrain()
-                    send_telegram("✅ AI model muvaffaqiyatli o'rgatildi!" + NL + NL + "Yangi accuracy: " + str(round(new_accuracy * 100, 1)) + "%" + NL + NL + "Bot yangi model bilan ishlayapti.")
-                    print("  >>> TELEGRAM: AI qayta o'rgatildi - Accuracy: " + str(round(new_accuracy * 100, 1)) + "%")
+                    from bot.volume_analysis import VolumeAnalyzer
+                    from bot.exchange import get_klines
+                    parts = text.split()
+                    symbol = parts[1] + "/USDT" if len(parts) > 1 else "BTC/USDT"
+                    
+                    analyzer = VolumeAnalyzer()
+                    df = get_klines(symbol)
+                    result = analyzer.analyze_volume(df, symbol)
+                    
+                    msg = "<b>📊 VOLUME ANALYSIS: " + symbol.replace("/USDT", "") + "</b>" + NL + NL
+                    if result.get("signal"):
+                        emoji = "🟢" if result["signal"] == "LONG" else "🔴"
+                        msg = msg + emoji + " Signal: " + result["signal"] + NL
+                        msg = msg + "Kuch: " + str(round(result["strength"], 2)) + NL
+                    msg = msg + "Sabab: " + result["reason"]
+                    send_telegram(msg)
                 except Exception as e:
-                    send_telegram("❌ AI o'rgatishda xato: " + str(e))
-                    print("  >>> TELEGRAM: AI retrain xato - " + str(e))
+                    send_telegram("Volume xato: " + str(e))
+            
+            elif text.startswith("/orderbook"):
+                try:
+                    from bot.orderbook_analysis import OrderBookAnalyzer
+                    from bot.exchange import exchange as exc
+                    parts = text.split()
+                    symbol = parts[1] + "/USDT" if len(parts) > 1 else "BTC/USDT"
+                    
+                    analyzer = OrderBookAnalyzer(exc)
+                    result = analyzer.analyze_orderbook(symbol)
+                    
+                    msg = "<b>📚 ORDER BOOK: " + symbol.replace("/USDT", "") + "</b>" + NL + NL
+                    if result.get("signal"):
+                        emoji = "🟢" if result["signal"] == "LONG" else "🔴"
+                        msg = msg + emoji + " Signal: " + result["signal"] + NL
+                        msg = msg + "Kuch: " + str(round(result["strength"], 2)) + NL
+                    msg = msg + "Sabab: " + result["reason"] + NL + NL
+                    if result.get("details"):
+                        msg = msg + "Bid/Ask: " + str(round(result["details"].get("imbalance_ratio", 1), 2))
+                    send_telegram(msg)
+                except Exception as e:
+                    send_telegram("OrderBook xato: " + str(e))
+            
+            elif text == "/arbitrage":
+                try:
+                    from bot.arbitrage import ArbitrageAnalyzer
+                    analyzer = ArbitrageAnalyzer(min_profit_pct=0.5)
+                    
+                    test_symbols = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "XRP/USDT", "DOGE/USDT"]
+                    opportunities = analyzer.scan_arbitrage_opportunities(test_symbols)
+                    
+                    report = analyzer.get_arbitrage_report(opportunities)
+                    send_telegram(report)
+                except Exception as e:
+                    send_telegram("Arbitrage xato: " + str(e))
+            
+            elif text == "/features":
+                from config.settings import VOLUME_ANALYSIS_ENABLED, ORDERBOOK_ANALYSIS_ENABLED, ARBITRAGE_ENABLED, SENTIMENT_ANALYSIS_ENABLED, ML_ENSEMBLE_ENABLED
+                msg = "<b>🚀 ADVANCED FEATURES</b>" + NL + NL
+                msg = msg + "1. Volume Analysis: " + ("✅" if VOLUME_ANALYSIS_ENABLED else "❌") + NL
+                msg = msg + "2. Order Book: " + ("✅" if ORDERBOOK_ANALYSIS_ENABLED else "❌") + NL
+                msg = msg + "3. Arbitrage: " + ("✅" if ARBITRAGE_ENABLED else "❌") + NL
+                msg = msg + "4. Sentiment: " + ("✅" if SENTIMENT_ANALYSIS_ENABLED else "❌") + NL
+                msg = msg + "5. ML Ensemble: " + ("✅" if ML_ENSEMBLE_ENABLED else "❌") + NL + NL
+                msg = msg + "Buyruqlar:" + NL
+                msg = msg + "/sentiment - Bozor kayfiyati" + NL
+                msg = msg + "/volume BTC - Hajm tahlili" + NL
+                msg = msg + "/orderbook ETH - Order book" + NL
+                msg = msg + "/arbitrage - Arbitraj scan"
+                send_telegram(msg)
+            
             elif text == "/help":
                 msg = "Buyruqlar:" + NL + NL
+                msg = msg + "<b>Asosiy:</b>" + NL
                 msg = msg + "/start - Savdoni yoqish" + NL
                 msg = msg + "/stop - Savdoni to'xtatish" + NL
                 msg = msg + "/status - Bot holati" + NL
                 msg = msg + "/balance - Balans" + NL
-                msg = msg + "/positions - Ochiq pozitsiyalar" + NL
-                msg = msg + "/correlation - Teskari korrelyatsiya" + NL
-                msg = msg + "/retrain - AI modelni qayta o'rgatish (5-10 min)" + NL
+                msg = msg + "/positions - Ochiq pozitsiyalar" + NL + NL
+                msg = msg + "<b>Advanced:</b>" + NL
+                msg = msg + "/features - Feature status" + NL
+                msg = msg + "/sentiment - Bozor kayfiyati" + NL
+                msg = msg + "/volume [COIN] - Hajm tahlili" + NL
+                msg = msg + "/orderbook [COIN] - Order book" + NL
+                msg = msg + "/arbitrage - Arbitraj scan" + NL + NL
                 msg = msg + "/help - Yordam"
                 send_telegram(msg)
     except Exception as e:
