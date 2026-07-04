@@ -169,6 +169,14 @@ RANGING_ATR_THRESHOLD = 1.5      # ATR < 1.5% = ranging market
 TRENDING_ATR_THRESHOLD = 3.5     # ATR > 3.5% = high volatility
 
 # =====================================================
+# VOLUME ANALYSIS SOZLAMALARI (Hajm tahlili)
+# =====================================================
+VOLUME_ANALYSIS_ENABLED = True   # Volume analysis yoqish/o'chirish
+VOLUME_SPIKE_MULTIPLIER = 3.0    # 3x o'rtachadan katta = spike
+VOLUME_LOOKBACK_PERIODS = 20     # 20 ta oxirgi sham
+VOLUME_STRENGTH_MIN = 1.5        # Minimal volume kuchi (1.0-3.0)
+
+# =====================================================
 # PAIR TRADING SOZLAMALARI (Correlation Trading)
 # =====================================================
 PAIR_TRADING_ENABLED = True      # Pair trading yoqish/o'chirish
