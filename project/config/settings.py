@@ -177,6 +177,14 @@ VOLUME_LOOKBACK_PERIODS = 20     # 20 ta oxirgi sham
 VOLUME_STRENGTH_MIN = 1.5        # Minimal volume kuchi (1.0-3.0)
 
 # =====================================================
+# ORDER BOOK ANALYSIS SOZLAMALARI (Orderlar tahlili)
+# =====================================================
+ORDERBOOK_ANALYSIS_ENABLED = True  # Order book analysis yoqish/o'chirish
+ORDERBOOK_DEPTH_LIMIT = 20         # 20 ta eng yaqin order
+ORDERBOOK_IMBALANCE_THRESHOLD = 2.0  # 2x buy/sell ratio = signal
+ORDERBOOK_SPREAD_MAX = 0.5         # Maksimal spread % (likvidlik uchun)
+
+# =====================================================
 # PAIR TRADING SOZLAMALARI (Correlation Trading)
 # =====================================================
 PAIR_TRADING_ENABLED = True      # Pair trading yoqish/o'chirish
