@@ -24,6 +24,7 @@ from bot.indicators import calculate_indicators, get_trend
 from bot.strategies import get_signal, check_trend_buy, check_trend_sell, calculate_dynamic_sltp, is_trading_session, check_portfolio_balance, check_multi_timeframe, check_correlation_filter, check_sentiment_filter
 from bot.risk_manager import RiskManager
 from bot.telegram_bot import send_telegram, check_telegram_commands, send_telegram_chart
+from bot.pair_trading import PairTradingEngine
 from ai.predictor import load_ai_model, ai_predict
 
 import pandas as pd
@@ -80,6 +81,10 @@ def run_bot():
     if AI_ENABLED:
         ai_loaded = load_ai_model()
 
+    # Pair Trading engine
+    from bot.exchange import exchange as exc
+    pair_engine = PairTradingEngine(exc)
+
     # Balans
     balance = get_balance()
     risk_manager = RiskManager(balance)
@@ -114,6 +119,11 @@ def run_bot():
         try:
             # Telegram buyruqlar
             bot_active = check_telegram_commands(bot_active, open_positions, get_balance)
+
+            # Pair Trading korrelyatsiyani yangilash (har soat)
+            from config.settings import PAIR_TRADING_ENABLED
+            if PAIR_TRADING_ENABLED:
+                pair_engine.update_correlations(symbols)
 
             # Auto AI Retraining (har 7 kunda)
             global last_retrain_date
@@ -250,8 +260,22 @@ def run_bot():
                         if not session_ok:
                             continue
 
-                        # Signal olish
+                        # Signal olish (asosiy strategiya)
                         signal_type, signal_dir, strategy_name = get_signal(row, prev, trend)
+
+                        # PAIR TRADING SIGNALLARI (yangi!)
+                        if PAIR_TRADING_ENABLED and signal_type is None:
+                            current_prices = {s: get_klines(s).iloc[-1]["close"] for s in symbols}
+                            pair_signals = pair_engine.check_pair_signals(current_prices, open_positions)
+                            
+                            if pair_signals:
+                                for ps in pair_signals[:1]:  # Faqat birinchi signal
+                                    if ps["symbol"] == symbol:
+                                        signal_type = ps["type"]
+                                        strategy_name = ps["strategy"]
+                                        signal_dir = 1 if signal_type == "LONG" else -1
+                                        print(f"  [PAIR] {symbol} {signal_type} - {ps['reason']}")
+                                        break
 
                         # Portfolio balance filter
                         if signal_type is not None:
