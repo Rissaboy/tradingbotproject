@@ -130,6 +130,20 @@ def check_telegram_commands(bot_active, open_positions, get_balance_func):
                 except Exception as e:
                     send_telegram("Arbitrage xato: " + str(e))
             
+            elif text == "/retrain":
+                try:
+                    send_telegram("🤖 AI model qayta o'rgatilmoqda..." + NL + "Bu 5-10 daqiqa davom etadi...")
+                    from ai.auto_retrain import retrain
+                    accuracy = retrain()
+                    
+                    msg = "<b>✅ AI MODEL YANGILANDI</b>" + NL + NL
+                    msg = msg + "Accuracy: " + str(round(accuracy * 100, 1)) + "%" + NL
+                    msg = msg + "Model: ai/models/sardor_ai_model.pkl" + NL + NL
+                    msg = msg + "Bot avtomatik yangi modeldan foydalanadi."
+                    send_telegram(msg)
+                except Exception as e:
+                    send_telegram("❌ Retrain xato: " + str(e))
+            
             elif text == "/features":
                 from config.settings import VOLUME_ANALYSIS_ENABLED, ORDERBOOK_ANALYSIS_ENABLED, ARBITRAGE_ENABLED, SENTIMENT_ANALYSIS_ENABLED, ML_ENSEMBLE_ENABLED
                 msg = "<b>🚀 ADVANCED FEATURES</b>" + NL + NL
@@ -158,7 +172,8 @@ def check_telegram_commands(bot_active, open_positions, get_balance_func):
                 msg = msg + "/sentiment - Bozor kayfiyati" + NL
                 msg = msg + "/volume [COIN] - Hajm tahlili" + NL
                 msg = msg + "/orderbook [COIN] - Order book" + NL
-                msg = msg + "/arbitrage - Arbitraj scan" + NL + NL
+                msg = msg + "/arbitrage - Arbitraj scan" + NL
+                msg = msg + "/retrain - AI modelni qayta o'rgatish" + NL + NL
                 msg = msg + "/help - Yordam"
                 send_telegram(msg)
     except Exception as e:
