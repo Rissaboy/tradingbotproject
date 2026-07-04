@@ -8,12 +8,12 @@ USE_TESTNET = True               # True = test, False = real
 
 # Trading sozlamalari
 TIMEFRAME = "5m"                 # 1m, 5m, 15m, 1h, 4h
-STOP_LOSS_PCT = 3.0              # Stop-Loss %
-TAKE_PROFIT_PCT = 3.0            # Take-Profit %
-RISK_PER_TRADE = 1.5             # Har savdoda risk %
+STOP_LOSS_PCT = 2.0              # Stop-Loss % (OPTIMIZED: 3.0 → 2.0)
+TAKE_PROFIT_PCT = 4.0            # Take-Profit % (OPTIMIZED: 3.0 → 4.0)
+RISK_PER_TRADE = 0.8             # Har savdoda risk % (OPTIMIZED: 1.5 → 0.8)
 MAX_DAILY_LOSS_PCT = 5.0         # Kunlik max zarar %
 MAX_CONSECUTIVE_LOSSES = 3       # Ketma-ket max zarar
-MAX_OPEN_POSITIONS = 5           # Bir vaqtda max pozitsiya
+MAX_OPEN_POSITIONS = 3           # Bir vaqtda max pozitsiya (OPTIMIZED: 5 → 3)
 
 # Indikator sozlamalari
 EMA_SHORT = 50
@@ -47,7 +47,7 @@ RSI_OVERBOUGHT = 75              # RSI yuqori zona
 
 # AI sozlamalari
 AI_ENABLED = True                # AI yoqish/o'chirish
-AI_MIN_CONFIDENCE = 0.70         # Minimum AI ishonch (0.0 - 1.0)
+AI_MIN_CONFIDENCE = 0.80         # Minimum AI ishonch (OPTIMIZED: 0.70 → 0.80)
 AI_MODEL_FILE = "ai/models/sardor_ai_model.pkl"
 AI_FEATURES_FILE = "ai/models/sardor_ai_features.pkl"
 
