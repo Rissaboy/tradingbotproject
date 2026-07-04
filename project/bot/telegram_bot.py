@@ -63,6 +63,13 @@ def check_telegram_commands(bot_active, open_positions, get_balance_func):
                     for sym, pos in open_positions.items():
                         msg = msg + sym + " " + pos["type"] + " @ $" + str(round(pos["entry_price"], 2)) + " (" + pos["strategy"] + ") AI:" + str(round(pos["ai_confidence"] * 100)) + "%" + NL
                     send_telegram(msg)
+            elif text == "/correlation":
+                try:
+                    # pair_trading moduldan import
+                    report = "Pair Trading module yuklanmagan"
+                    send_telegram(report)
+                except Exception as e:
+                    send_telegram("Korrelyatsiya ma'lumotlari yo'q")
             elif text == "/retrain":
                 send_telegram("⏳ AI model qayta o'rgatilmoqda... (5-10 daqiqa)")
                 try:
@@ -80,6 +87,7 @@ def check_telegram_commands(bot_active, open_positions, get_balance_func):
                 msg = msg + "/status - Bot holati" + NL
                 msg = msg + "/balance - Balans" + NL
                 msg = msg + "/positions - Ochiq pozitsiyalar" + NL
+                msg = msg + "/correlation - Teskari korrelyatsiya" + NL
                 msg = msg + "/retrain - AI modelni qayta o'rgatish (5-10 min)" + NL
                 msg = msg + "/help - Yordam"
                 send_telegram(msg)

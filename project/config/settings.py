@@ -168,6 +168,17 @@ MARKET_REGIME_ENABLED = True     # Bozor holatini aniqlash (trending/ranging)
 RANGING_ATR_THRESHOLD = 1.5      # ATR < 1.5% = ranging market
 TRENDING_ATR_THRESHOLD = 3.5     # ATR > 3.5% = high volatility
 
+# =====================================================
+# PAIR TRADING SOZLAMALARI (Correlation Trading)
+# =====================================================
+PAIR_TRADING_ENABLED = True      # Pair trading yoqish/o'chirish
+PAIR_MIN_CORRELATION = -0.70     # Minimal teskari korrelyatsiya (-0.70 dan past)
+PAIR_TRIGGER_MOVE_PCT = 2.5      # Trigger: coin 2.5% harakatlansa
+PAIR_STOP_LOSS_PCT = 1.5         # Pair SL: 1.5%
+PAIR_TAKE_PROFIT_PCT = 3.0       # Pair TP: 3.0%
+PAIR_MAX_POSITIONS = 2           # Maksimal pair savdolar soni
+PAIR_LOOKBACK_HOURS = 168        # Korrelyatsiya hisoblash (168 = 7 kun)
+
 
 
 # =====================================================
