@@ -20,7 +20,7 @@ class VolumeAnalyzer:
         self.lookback_periods = lookback_periods
         self.spike_multiplier = spike_multiplier
     
-    def analyze_volume(self, df):
+    def analyze_volume(self, df, symbol=None):
         """Hajm tahlili va signal berish"""
         if len(df) < self.lookback_periods + 1:
             return {

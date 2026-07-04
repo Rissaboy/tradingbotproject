@@ -15,15 +15,26 @@ from datetime import datetime
 class OrderBookAnalyzer:
     """Order Book tahlili - Support/Resistance"""
     
-    def __init__(self, depth_limit=20, imbalance_threshold=2.0):
+    def __init__(self, exchange=None, depth_limit=20, imbalance_threshold=2.0):
+        self.exchange = exchange
         self.depth_limit = depth_limit
         self.imbalance_threshold = imbalance_threshold
     
-    def analyze_orderbook(self, exchange, symbol):
+    def analyze_orderbook(self, symbol, exchange=None):
         """Order Book tahlili"""
+        # Use provided exchange or default one
+        exch = exchange or self.exchange
+        
+        if not exch:
+            return {
+                "signal": None,
+                "strength": 0,
+                "reason": "Exchange object yo'q"
+            }
+        
         try:
             # Order book olish (20 ta eng yaqin order)
-            orderbook = exchange.fetch_order_book(symbol, limit=self.depth_limit)
+            orderbook = exch.fetch_order_book(symbol, limit=self.depth_limit)
             
             bids = orderbook["bids"]  # Buy orders
             asks = orderbook["asks"]  # Sell orders
