@@ -42,8 +42,8 @@ def train_ensemble_models():
         for symbol in symbols:
             print(f"  {symbol} yuklanmoqda...")
             try:
-                # 60 kunlik data
-                df = get_klines(symbol, timeframe="5m", limit=1000)
+                # Data olish (get_klines faqat symbol qabul qiladi, timeframe yo'q)
+                df = get_klines(symbol)
                 
                 if len(df) < 100:
                     continue
