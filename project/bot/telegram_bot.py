@@ -144,6 +144,49 @@ def check_telegram_commands(bot_active, open_positions, get_balance_func):
                 except Exception as e:
                     send_telegram("❌ Retrain xato: " + str(e))
             
+            elif text == "/train_ensemble":
+                try:
+                    send_telegram("🤖 ML ENSEMBLE o'rgatilmoqda..." + NL + "Bu 10-15 daqiqa davom etadi..." + NL + NL + "4 ta model:" + NL + "• RandomForest" + NL + "• ExtraTrees" + NL + "• XGBoost" + NL + "• LightGBM")
+                    
+                    import subprocess
+                    result = subprocess.run(
+                        ["/root/bot_venv/bin/python3", "ai/train_ensemble.py"],
+                        capture_output=True,
+                        text=True,
+                        timeout=1800  # 30 daqiqa timeout
+                    )
+                    
+                    if "✅ ML ENSEMBLE TRAINING TUGADI!" in result.stdout:
+                        # Modellar soni
+                        import re
+                        accuracy_matches = re.findall(r"Accuracy: ([\d.]+)%", result.stdout)
+                        
+                        msg = "<b>✅ ML ENSEMBLE O'RGATILDI!</b>" + NL + NL
+                        
+                        if accuracy_matches:
+                            models_trained = len(accuracy_matches)
+                            avg_accuracy = sum([float(a) for a in accuracy_matches]) / models_trained
+                            msg = msg + f"Modellar: {models_trained} ta" + NL
+                            msg = msg + f"O'rtacha accuracy: {avg_accuracy:.1f}%" + NL + NL
+                            
+                            for i, acc in enumerate(accuracy_matches):
+                                model_names = ["RandomForest", "ExtraTrees", "XGBoost", "LightGBM"]
+                                if i < len(model_names):
+                                    msg = msg + f"• {model_names[i]}: {acc}%" + NL
+                        
+                        msg = msg + NL + "Yoqish uchun:" + NL
+                        msg = msg + "settings.py da ML_ENSEMBLE_ENABLED = True qiling" + NL
+                        msg = msg + "Keyin bot restart qiling"
+                        
+                        send_telegram(msg)
+                    else:
+                        send_telegram("❌ Ensemble training xato:" + NL + result.stdout[-500:] if result.stdout else "Natija yo'q")
+                        
+                except subprocess.TimeoutExpired:
+                    send_telegram("⏱️ Training juda uzoq davom etdi (30 daqiqadan ortiq)." + NL + "Server logini tekshiring.")
+                except Exception as e:
+                    send_telegram("❌ Ensemble training xato: " + str(e))
+            
             elif text == "/features":
                 from config.settings import VOLUME_ANALYSIS_ENABLED, ORDERBOOK_ANALYSIS_ENABLED, ARBITRAGE_ENABLED, SENTIMENT_ANALYSIS_ENABLED, ML_ENSEMBLE_ENABLED
                 msg = "<b>🚀 ADVANCED FEATURES</b>" + NL + NL
@@ -172,8 +215,10 @@ def check_telegram_commands(bot_active, open_positions, get_balance_func):
                 msg = msg + "/sentiment - Bozor kayfiyati" + NL
                 msg = msg + "/volume [COIN] - Hajm tahlili" + NL
                 msg = msg + "/orderbook [COIN] - Order book" + NL
-                msg = msg + "/arbitrage - Arbitraj scan" + NL
-                msg = msg + "/retrain - AI modelni qayta o'rgatish" + NL + NL
+                msg = msg + "/arbitrage - Arbitraj scan" + NL + NL
+                msg = msg + "<b>AI Training:</b>" + NL
+                msg = msg + "/retrain - Asosiy AI qayta o'rgatish (5-10 min)" + NL
+                msg = msg + "/train_ensemble - ML Ensemble o'rgatish (10-15 min)" + NL + NL
                 msg = msg + "/help - Yordam"
                 send_telegram(msg)
     except Exception as e:
