@@ -134,7 +134,11 @@ class MLEnsemble:
         for feat_name in self.features_list:
             X.append(features.get(feat_name, 0))
         
-        return np.array(X).reshape(1, -1)
+        # DataFrame ga o'girish (warning ni oldini olish uchun)
+        import pandas as pd
+        X_df = pd.DataFrame([X], columns=self.features_list)
+        
+        return X_df
     
     def predict_single_model(self, model_name, X):
         """Bitta model bilan bashorat"""
