@@ -8,17 +8,17 @@ USE_TESTNET = True               # True = test, False = real
 
 # Trading sozlamalari
 TIMEFRAME = "5m"                 # 1m, 5m, 15m, 1h, 4h
-STOP_LOSS_PCT = 2.0              # Stop-Loss % (TIGHTENED from 3.0)
-TAKE_PROFIT_PCT = 4.0            # Take-Profit % (IMPROVED R:R ratio)
-RISK_PER_TRADE = 0.8             # Har savdoda risk % (REDUCED from 1.5)
-MAX_DAILY_LOSS_PCT = 3.0         # Kunlik max zarar % (REDUCED from 5.0)
-MAX_CONSECUTIVE_LOSSES = 2       # Ketma-ket max zarar (REDUCED from 3)
-MAX_OPEN_POSITIONS = 3           # Bir vaqtda max pozitsiya (REDUCED from 5)
+STOP_LOSS_PCT = 3.0              # Stop-Loss %
+TAKE_PROFIT_PCT = 3.0            # Take-Profit %
+RISK_PER_TRADE = 1.5             # Har savdoda risk %
+MAX_DAILY_LOSS_PCT = 5.0         # Kunlik max zarar %
+MAX_CONSECUTIVE_LOSSES = 3       # Ketma-ket max zarar
+MAX_OPEN_POSITIONS = 5           # Bir vaqtda max pozitsiya
 
 # Indikator sozlamalari
 EMA_SHORT = 50
 EMA_LONG = 200
-MIN_SIGNALS = 3                  # Minimum signal soni (INCREASED from 2 - more confirmation needed)
+MIN_SIGNALS = 2                  # Minimum signal soni
 
 # Trailing Stop-Loss
 TRAILING_ACTIVATE_PCT = 1.5      # Trailing yonadigan %
@@ -26,8 +26,8 @@ TRAILING_DISTANCE_PCT = 1.0      # SL masofasi %
 
 # Dynamic SL/TP (ATR asosida)
 DYNAMIC_SLTP_ENABLED = True      # True = har coin uchun alohida SL/TP
-ATR_SL_MULTIPLIER = 1.5         # SL = ATR * 1.5 (TIGHTENED from 2.0)
-ATR_TP_MULTIPLIER = 3.0         # TP = ATR * 3.0 (Better risk/reward ratio)
+ATR_SL_MULTIPLIER = 2.0         # SL = ATR * 2
+ATR_TP_MULTIPLIER = 2.5         # TP = ATR * 2.5
 MIN_SL_PCT = 1.0                # Minimum SL (juda kichik bo'lmasin)
 MAX_SL_PCT = 8.0                # Maximum SL (juda katta bo'lmasin)
 MIN_TP_PCT = 1.5                # Minimum TP
@@ -47,7 +47,7 @@ RSI_OVERBOUGHT = 75              # RSI yuqori zona
 
 # AI sozlamalari
 AI_ENABLED = True                # AI yoqish/o'chirish
-AI_MIN_CONFIDENCE = 0.80         # Minimum AI ishonch (INCREASED to 0.80 for better quality)
+AI_MIN_CONFIDENCE = 0.70         # Minimum AI ishonch (0.0 - 1.0)
 AI_MODEL_FILE = "ai/models/sardor_ai_model.pkl"
 AI_FEATURES_FILE = "ai/models/sardor_ai_features.pkl"
 
@@ -119,87 +119,54 @@ DEFAULT_SYMBOLS = [
     "POL/USDT"
 ]
 
+# =====================================================
+# ADVANCED FEATURES (5 TA YANGI FUNKSIYA)
+# =====================================================
 
+# Feature 1: Volume Analysis (Hajm tahlili - kitlarni topish)
+VOLUME_ANALYSIS_ENABLED = True
+VOLUME_LOOKBACK_PERIODS = 20        # O'rtacha hajm uchun nechtaga qarash
+VOLUME_SPIKE_MULTIPLIER = 3.0       # Spike = 3x o'rtachadan katta
 
-# =====================================================
-# GRID TRADING SOZLAMALARI (Eski bot uchun)
-# =====================================================
-GRID_TRADING_ENABLED = False     # Grid trading o'chirilgan
-GRID_LEVELS = 10                 # Grid darajalari soni
-GRID_SPACING_PCT = 0.5           # Gridlar orasidagi masofa %
-GRID_POSITION_SIZE_PCT = 10.0    # Har bir grid uchun hajm %
-GRID_ORDER_SIZE_PCT = 10.0       # Eski bot uchun (GRID_POSITION_SIZE_PCT bilan bir xil)
-GRID_TAKE_PROFIT_PCT = 5.0       # Grid TP %
-GRID_STOP_LOSS_PCT = 10.0        # Grid SL %
-GRID_MIN_PROFIT_PCT = 0.5        # Grid minimal foyda %
-GRID_MAX_ORDERS = 10             # Maksimal grid orderlar soni
-GRID_SYMBOLS = []                # Grid uchun coinlar ro'yxati (bo'sh = barcha)
+# Feature 2: Order Book Analysis (Support/Resistance tahlili)
+ORDERBOOK_ANALYSIS_ENABLED = True
+ORDERBOOK_DEPTH_LIMIT = 20          # Order book chuqurligi
+ORDERBOOK_IMBALANCE_THRESHOLD = 2.0 # Bid/Ask nomutanosiblik (2x)
 
-# =====================================================
-# DCA TRADING SOZLAMALARI (Dollar Cost Averaging)
-# =====================================================
-DCA_ENABLED = False              # DCA trading o'chirilgan
-DCA_MAX_ORDERS = 5               # Maksimal DCA orderlar soni
-DCA_STEP_PCT = 2.0               # Har bir DCA qadami % (narx 2% tushganda)
-DCA_SIZE_MULTIPLIER = 1.5        # Har bir DCA order hajmi multiplier
-DCA_MULTIPLIER = 1.5             # DCA_SIZE_MULTIPLIER bilan bir xil (eski bot uchun)
-DCA_TAKE_PROFIT_PCT = 3.0        # DCA umumiy TP %
-DCA_MAX_DEVIATION_PCT = 10.0     # Maksimal narx og'ishi % (10% dan ortiq tushsa to'xtatish)
+# Feature 3: Multi-Exchange Arbitrage (Bir necha birjalar orasida narx farqi)
+ARBITRAGE_ENABLED = False            # ⚠️ Ehtiyotkorlik bilan yoqing!
+ARBITRAGE_MIN_PROFIT_PCT = 0.5      # Minimum foyda (komissiyadan keyin)
+ARBITRAGE_EXCHANGES = {
+    "binance": {"testnet": True},
+    "bybit": {"testnet": True},
+    # "gateio": {"testnet": False},
+    # "mexc": {"testnet": False},
+}
+ARBITRAGE_SCAN_INTERVAL = 60        # Har 60 sekundda skaner (rate limit uchun)
 
-# =====================================================
-# SIGNAL CHANNEL SOZLAMALARI (Telegram signal kanallar)
-# =====================================================
-SIGNAL_CHANNEL_ENABLED = False   # Signal channel o'chirilgan
-SIGNAL_CHANNEL_ID = ""           # Telegram kanal ID (bo'sh = o'chiq)
+# Feature 4: Sentiment Analysis (Bozor kayfiyati tahlili)
+SENTIMENT_ANALYSIS_ENABLED = True
+SENTIMENT_SOURCES = ["alternative.me"]  # Fear & Greed Index
+SENTIMENT_UPDATE_INTERVAL = 3600    # Har 1 soatda yangilash
+SENTIMENT_MIN_INFLUENCE = 2.0       # Sentiment ta'siri (kuch koeffitsenti)
 
-# =====================================================
-# QO'SHIMCHA SOZLAMALAR
-# =====================================================
-# Whale tracking (katta orderlar kuzatuvi)
-WHALE_TRACKING_ENABLED = True    # Whale signallarini kuzatish
-WHALE_MIN_SIZE_BTC = 50          # Minimum whale order hajmi (BTC)
+# Feature 5: ML Ensemble (Bir necha AI modellar)
+ML_ENSEMBLE_ENABLED = False          # ⚠️ Avval modellarni o'qitish kerak!
+ML_ENSEMBLE_MODELS_DIR = "ai/models/ensemble"
+ML_ENSEMBLE_MIN_CONFIDENCE = 0.65   # Minimum ishonch (ensemble dan)
+ML_ENSEMBLE_MODELS = {
+    "randomforest": 1.0,   # Og'irlik (asosiy model)
+    "xgboost": 1.2,        # Eng aniq
+    "lightgbm": 1.1,       # Tez va aniq
+    "extratrees": 0.9      # Qo'shimcha
+}
 
-# Smart Money sozlamalari
-SMART_MONEY_ENABLED = True       # Smart Money flow kuzatuvi
-SMART_MONEY_THRESHOLD = 1000000  # Min smart money hajm ($)
-
-# Market regime detection
-MARKET_REGIME_ENABLED = True     # Bozor holatini aniqlash (trending/ranging)
-RANGING_ATR_THRESHOLD = 1.5      # ATR < 1.5% = ranging market
-TRENDING_ATR_THRESHOLD = 3.5     # ATR > 3.5% = high volatility
-
-# =====================================================
-# VOLUME ANALYSIS SOZLAMALARI (Hajm tahlili)
-# =====================================================
-VOLUME_ANALYSIS_ENABLED = True   # Volume analysis yoqish/o'chirish
-VOLUME_SPIKE_MULTIPLIER = 3.0    # 3x o'rtachadan katta = spike
-VOLUME_LOOKBACK_PERIODS = 20     # 20 ta oxirgi sham
-VOLUME_STRENGTH_MIN = 1.5        # Minimal volume kuchi (1.0-3.0)
-
-# =====================================================
-# ORDER BOOK ANALYSIS SOZLAMALARI (Orderlar tahlili)
-# =====================================================
-ORDERBOOK_ANALYSIS_ENABLED = True  # Order book analysis yoqish/o'chirish
-ORDERBOOK_DEPTH_LIMIT = 20         # 20 ta eng yaqin order
-ORDERBOOK_IMBALANCE_THRESHOLD = 2.0  # 2x buy/sell ratio = signal
-ORDERBOOK_SPREAD_MAX = 0.5         # Maksimal spread % (likvidlik uchun)
-
-# =====================================================
-# PAIR TRADING SOZLAMALARI (Correlation Trading)
-# =====================================================
-PAIR_TRADING_ENABLED = True      # Pair trading yoqish/o'chirish
-PAIR_MIN_CORRELATION = -0.70     # Minimal teskari korrelyatsiya (-0.70 dan past)
-PAIR_TRIGGER_MOVE_PCT = 2.5      # Trigger: coin 2.5% harakatlansa
-PAIR_STOP_LOSS_PCT = 1.5         # Pair SL: 1.5%
-PAIR_TAKE_PROFIT_PCT = 3.0       # Pair TP: 3.0%
-PAIR_MAX_POSITIONS = 2           # Maksimal pair savdolar soni
-PAIR_LOOKBACK_HOURS = 168        # Korrelyatsiya hisoblash (168 = 7 kun)
-
-
-
-# =====================================================
-# LIVE TRADING SOZLAMALARI
-# =====================================================
-LIVE_TRADING = not USE_TESTNET  # True = real, False = testnet
-ORDER_SIZE_USD = 100.0          # Order hajmi USD
-MIN_BALANCE_USD = 50.0          # Minimal balans USD
+# Advanced Features ni birga ishlatish
+# Agar bitta feature signal bersa va boshqasi tasdiqlasa = KUCHLI signal
+# Feature Priority (qaysi biri muhimroq):
+# 1. AI Model (asosiy)
+# 2. Volume Analysis (kitlar harakati)
+# 3. Order Book (support/resistance)
+# 4. Sentiment (bozor kayfiyati)
+# 5. ML Ensemble (agar o'qitilgan bo'lsa)
+# 6. Arbitrage (alohida strategiya)
