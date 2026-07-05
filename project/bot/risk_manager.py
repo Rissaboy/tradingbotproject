@@ -20,13 +20,27 @@ class RiskManager:
     def new_day_check(self, current_balance):
         today = datetime.now().date()
         if today != self.day_start:
+            # Kecha statistikasini saqlash
+            yesterday_stats = {
+                "date": self.day_start.strftime("%Y-%m-%d"),
+                "trades": self.total_trades,
+                "wins": self.winning_trades,
+                "losses": self.losing_trades,
+                "win_rate": self.get_win_rate(),
+                "profit": current_balance - self.daily_start_balance,
+                "start_balance": self.daily_start_balance,
+                "end_balance": current_balance
+            }
+            
+            # Yangi kun boshlash
             self.day_start = today
             self.daily_start_balance = current_balance
             self.daily_loss = 0.0
             self.consecutive_losses = 0
             self.cooldown_until = None
-            return True
-        return False
+            
+            return True, yesterday_stats
+        return False, None
 
     def can_trade(self):
         if self.cooldown_until and datetime.now() < self.cooldown_until:

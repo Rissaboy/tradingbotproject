@@ -171,8 +171,29 @@ def run_bot():
             current_balance = get_balance()
 
             # Yangi kun
-            if risk_manager.new_day_check(current_balance):
-                send_telegram("Yangi kun boshlandi! Balans: $" + str(round(current_balance, 2)))
+            is_new_day, yesterday_stats = risk_manager.new_day_check(current_balance)
+            if is_new_day:
+                msg = "🌅 <b>YANGI KUN BOSHLANDI!</b>" + NL + NL
+                
+                if yesterday_stats and yesterday_stats["trades"] > 0:
+                    # Kecha statistikasi
+                    msg = msg + "📊 <b>KECHA NATIJALAR</b>" + NL
+                    msg = msg + "Sana: " + yesterday_stats["date"] + NL + NL
+                    
+                    msg = msg + "Savdolar: " + str(yesterday_stats["trades"]) + " ta" + NL
+                    msg = msg + "Yutdi: " + str(yesterday_stats["wins"]) + " ta ✅" + NL
+                    msg = msg + "Yutqazdi: " + str(yesterday_stats["losses"]) + " ta ❌" + NL
+                    msg = msg + "Win rate: " + str(round(yesterday_stats["win_rate"], 1)) + "%" + NL + NL
+                    
+                    profit = yesterday_stats["profit"]
+                    profit_emoji = "💰" if profit >= 0 else "📉"
+                    profit_sign = "+" if profit >= 0 else ""
+                    msg = msg + profit_emoji + " <b>Foyda: " + profit_sign + "$" + str(round(profit, 2)) + "</b>" + NL + NL
+                    
+                    msg = msg + "━━━━━━━━━━━━━━━━━━" + NL + NL
+                
+                msg = msg + "💵 Bugungi balans: $" + str(round(current_balance, 2))
+                send_telegram(msg)
 
             # Status
             status_text = "YOQILGAN" if bot_active else "TO'XTATILGAN"
