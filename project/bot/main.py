@@ -365,9 +365,9 @@ def run_bot():
                                     print("  [SKIP] " + symbol + " " + signal_type + " - Ensemble teskari")
                                     signal_type = None
                         
-                        # Signal strength check (minimum 1.5 kerak)
-                        if signal_type is not None and signal_strength < 1.5:
-                            print("  [SKIP] " + symbol + " " + signal_type + " - Signal zaif (" + str(round(signal_strength, 2)) + " < 1.5)")
+                        # Signal strength check (minimum 1.0 kerak)
+                        if signal_type is not None and signal_strength < 1.0:
+                            print("  [SKIP] " + symbol + " " + signal_type + " - Signal zaif (" + str(round(signal_strength, 2)) + " < 1.0)")
                             signal_type = None
 
                         # AI filtr
